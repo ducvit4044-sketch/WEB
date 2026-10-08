@@ -1,5 +1,5 @@
 # Giai đoạn 1: Build ứng dụng
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Vì tên project của bạn có dấu cách ("API TEST.csproj"), bắt buộc phải để trong ngoặc kép như thế này:
