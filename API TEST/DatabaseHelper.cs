@@ -1,25 +1,33 @@
 ﻿using System;
-using System.Data.SqlClient;
+using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 
 namespace QLNhanVien2
 {
     internal class DatabaseHelper
     {
-        private static string connectionString =
-            @"Server=DESKTOP-QKQN78V\MSSQLSERVER03;
-              Database=QLNhanVien2;
-              Integrated Security=True;";
-
-        public static SqlConnection GetConnection()
+        // Tự động đọc chuỗi kết nối từ appsettings.json ("Data Source=nhansu.db")
+        private static string GetConnectionString()
         {
-            return new SqlConnection(connectionString);
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .Build();
+
+            return configuration.GetConnectionString("DefaultConnection") ?? "Data Source=nhansu.db";
+        }
+
+        public static SqliteConnection GetConnection()
+        {
+            return new SqliteConnection(GetConnectionString());
         }
 
         public static bool TestConnection()
         {
             try
             {
-                using (SqlConnection conn = GetConnection())
+                using (SqliteConnection conn = GetConnection())
                 {
                     conn.Open();
                     return true;
