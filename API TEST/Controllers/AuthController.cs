@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using QLNhanVien2;
-using System.Data.SqlClient;
+using System;
+using Microsoft.Data.Sqlite;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -13,7 +14,7 @@ public class AuthController : ControllerBase
     {
         try
         {
-            using (SqlConnection conn = DatabaseHelper.GetConnection())
+            using (SqliteConnection conn = DatabaseHelper.GetConnection())
             {
                 conn.Open();
                 string sql = @"SELECT tk.TenDangNhap, tk.MaNV, tk.MaQuyen, q.TenQuyen 
@@ -21,12 +22,12 @@ public class AuthController : ControllerBase
                                LEFT JOIN Quyen q ON tk.MaQuyen = q.MaQuyen
                                WHERE tk.TenDangNhap = @TenDangNhap AND tk.MatKhau = @MatKhau AND tk.TrangThai = 1";
 
-                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                using (SqliteCommand cmd = new SqliteCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@TenDangNhap", model.TenDangNhap.Trim());
                     cmd.Parameters.AddWithValue("@MatKhau", model.MatKhau.Trim());
 
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    using (SqliteDataReader reader = cmd.ExecuteReader())
                     {
                         if (reader.Read())
                         {
@@ -57,22 +58,24 @@ public class AuthController : ControllerBase
     {
         try
         {
-            using (SqlConnection conn = DatabaseHelper.GetConnection())
+            using (SqliteConnection conn = DatabaseHelper.GetConnection())
             {
                 conn.Open();
                 string checkSql = "SELECT COUNT(*) FROM TaiKhoan WHERE TenDangNhap = @User AND MatKhau = @Pass";
-                using (SqlCommand cmdCheck = new SqlCommand(checkSql, conn))
+                using (SqliteCommand cmdCheck = new SqliteCommand(checkSql, conn))
                 {
                     cmdCheck.Parameters.AddWithValue("@User", model.TenDangNhap.Trim());
                     cmdCheck.Parameters.AddWithValue("@Pass", model.MatKhauCu.Trim());
-                    if ((int)cmdCheck.ExecuteScalar() == 0)
+
+                    long count = (long)cmdCheck.ExecuteScalar();
+                    if (count == 0)
                     {
                         return BadRequest(new { success = false, message = "Mật khẩu cũ không chính xác!" });
                     }
                 }
 
                 string updateSql = "UPDATE TaiKhoan SET MatKhau = @NewPass WHERE TenDangNhap = @User";
-                using (SqlCommand cmdUpdate = new SqlCommand(updateSql, conn))
+                using (SqliteCommand cmdUpdate = new SqliteCommand(updateSql, conn))
                 {
                     cmdUpdate.Parameters.AddWithValue("@NewPass", model.MatKhauMoi.Trim());
                     cmdUpdate.Parameters.AddWithValue("@User", model.TenDangNhap.Trim());
