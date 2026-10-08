@@ -1,0 +1,86 @@
+﻿@page
+@model API_TEST.Pages.LoginModel
+@{
+    ViewData["Title"] = "Đăng nhập hệ thống";
+}
+
+<div class="container mt-5" style="max-width: 400px;">
+    <h2 class="text-center mb-4">Đăng nhập Web</h2>
+
+    <div class="card p-4 shadow">
+        <div class="mb-3">
+            <label class="form-label">Tên đăng nhập</label>
+            <input type="text" id="txtTenDangNhap" class="form-control" placeholder="Nhập tài khoản..." />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Mật khẩu</label>
+            <input type="password" id="txtMatKhau" class="form-control" placeholder="Nhập mật khẩu..." />
+        </div>
+        <button type="button" onclick="thucHienDangNhap()" class="btn btn-primary w-100">Đăng nhập</button>
+        <div id="thongBao" class="mt-3 text-center fw-bold"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function thucHienDangNhap() {
+            const tenDangNhap = document.getElementById('txtTenDangNhap').value.trim();
+            const matKhau = document.getElementById('txtMatKhau').value.trim();
+            const divThongBao = document.getElementById('thongBao');
+
+            if (!tenDangNhap || !matKhau) {
+                divThongBao.style.color = 'orange';
+                divThongBao.innerText = 'Vui lòng nhập đầy đủ tài khoản và mật khẩu!';
+                return;
+            }
+
+            divThongBao.style.color = 'blue';
+            divThongBao.innerText = 'Đang kết nối đến server...';
+
+            const data = {
+                TenDangNhap: tenDangNhap,
+                MatKhau: matKhau
+            };
+
+            try {
+                // Sử dụng đường dẫn tương đối để gọi API đăng nhập
+                const response = await fetch('/api/Auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && (result.success || result.Success)) {
+                    divThongBao.style.color = 'green';
+                    divThongBao.innerText = 'Đăng nhập thành công! Đang chuyển hướng...';
+
+                    // Lưu thông tin người dùng vào sessionStorage
+                    sessionStorage.setItem("currentUser", JSON.stringify(result));
+
+                    // Phân quyền điều hướng chuẩn xác
+                    const maQuyen = (result.maQuyen || result.MaQuyen || '').trim();
+                    setTimeout(() => {
+                        if (maQuyen === 'Q01' || maQuyen === 'Q02') {
+                            // Admin / Quản lý -> Vào trang Quản lý nhân viên
+                            window.location.href = '/NhanVien';
+                        } else {
+                            // Nhân viên thường -> Vào trang cá nhân
+                            window.location.href = '/TrangCaNhan';
+                        }
+                    }, 500);
+                } else {
+                    divThongBao.style.color = 'red';
+                    divThongBao.innerText = result.message || result.Message || 'Sai tài khoản hoặc mật khẩu!';
+                }
+            } catch (error) {
+                console.error(error);
+                divThongBao.style.color = 'red';
+                divThongBao.innerText = 'Lỗi kết nối: ' + error.message;
+            }
+        }
+    </script>
+}

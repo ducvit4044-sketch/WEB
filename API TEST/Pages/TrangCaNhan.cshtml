@@ -1,0 +1,226 @@
+﻿@page
+@model API_TEST.Pages.TrangCaNhanModel
+@{
+    ViewData["Title"] = "Trang cá nhân nhân viên";
+}
+
+<div class="container mt-4">
+    <div class="card shadow p-4">
+        <h3 class="text-center mb-4 text-primary fw-bold">THÔNG TIN CÁ NHÂN</h3>
+
+        <!-- Bố cục hiển thị thông tin cá nhân mặc định -->
+        <div id="vungThongTinCaNhan">
+            <div class="row mb-4 fs-5">
+                <div class="col-md-6">
+                    <p><strong>Mã nhân viên:</strong> <span id="lblMaNV" class="text-dark">...</span></p>
+                    <p><strong>Họ Tên:</strong> <span id="lblHoTen" class="text-dark">...</span></p>
+                    <p><strong>Ngày sinh:</strong> <span id="lblNgaySinh" class="text-dark">...</span></p>
+                    <p><strong>Trạng Thái:</strong> <span id="lblTrangThai" class="text-dark">...</span></p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Chức vụ:</strong> <span id="lblChucVu" class="text-dark">...</span></p>
+                    <p><strong>Giới tính:</strong> <span id="lblPhai" class="text-dark">...</span></p>
+                    <p><strong>Phòng Ban:</strong> <span id="lblPhongBan" class="text-dark">...</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vùng hiển thị danh sách toàn bộ nhân viên (Ẩn đi ban đầu, chỉ hiện khi bấm Xem - Đã lược bỏ cột Lương) -->
+        <div id="vungDanhSachNhanVien" style="display: none;" class="mt-3">
+            <h4 class="text-success mb-3">Danh sách toàn bộ nhân viên trong công ty</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped align-middle">
+                    <thead class="table-dark text-center">
+                        <tr>
+                            <th>Mã NV</th>
+                            <th>Họ Tên</th>
+                            <th>Ngày Sinh</th>
+                            <th>Giới Tính</th>
+                            <th>SĐT</th>
+                            <th>Email</th>
+                            <th>Địa Chỉ</th>
+                            <th>Chức Vụ</th>
+                            <th>Phòng Ban</th>
+                            <th>Trạng Thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tblDanhSachBody">
+                        <!-- Dữ liệu sẽ được load tự động vào đây -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Các nút chức năng -->
+        <div class="d-flex justify-content-center gap-3 mt-4">
+            <button type="button" onclick="xemTatCaNhanVien()" class="btn btn-info px-4 text-white fw-bold">Xem</button>
+            <button type="button" onclick="hienModalDoiMatKhau()" class="btn btn-warning px-4 text-white fw-bold">Đổi mật khẩu</button>
+            <button type="button" onclick="thucHienChamCong()" class="btn btn-success px-4 fw-bold">Chấm công</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Đổi Mật Khẩu -->
+<div class="modal fade" id="doiMatKhauModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content p-3">
+            <h5 class="modal-title mb-3 fw-bold text-primary">Đổi mật khẩu</h5>
+            <div class="mb-3">
+                <label class="form-label">Mật khẩu cũ</label>
+                <input type="password" id="txtMatKhauCu" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Mật khẩu mới</label>
+                <input type="password" id="txtMatKhauMoi" class="form-control" />
+            </div>
+            <div class="text-end">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="guiDoiMatKhau()">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function layUserHienTai() {
+            const userStr = sessionStorage.getItem("currentUser");
+            if (!userStr) {
+                return { tenDangNhap: "nv_an", TenDangNhap: "nv_an" };
+            }
+            return JSON.parse(userStr);
+        }
+
+        // 1. Tải thông tin cá nhân mặc định khi vào trang
+        async function taiThongTinCaNhan() {
+            const currentUser = layUserHienTai();
+            const username = currentUser.tenDangNhap || currentUser.TenDangNhap || "nv_an";
+
+            try {
+                const response = await fetch(`/api/NhanVien/thong-tin/${username}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('lblMaNV').innerText = data.maNV || data.MaNV || '';
+                    document.getElementById('lblHoTen').innerText = data.hoTen || data.HoTen || '';
+                    document.getElementById('lblNgaySinh').innerText = data.ngaySinh || data.NgaySinh || '';
+                    document.getElementById('lblPhai').innerText = data.phai || data.Phai || '';
+                    document.getElementById('lblChucVu').innerText = data.chucVu || data.ChucVu || '';
+                    document.getElementById('lblPhongBan').innerText = data.phongBan || data.PhongBan || '';
+                    document.getElementById('lblTrangThai').innerText = (data.trangThai || data.TrangThai) ? 'Đang làm việc' : 'Đã nghỉ';
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Tự động tải thông tin cá nhân khi mở trang
+        window.onload = function() {
+            taiThongTinCaNhan();
+        };
+
+        // 2. Khi bấm nút "Xem" -> Ẩn thông tin cá nhân, hiển thị bảng danh sách toàn bộ nhân viên (Không có cột Lương)
+        async function xemTatCaNhanVien() {
+            const vungCaNhan = document.getElementById('vungThongTinCaNhan');
+            const vungDanhSach = document.getElementById('vungDanhSachNhanVien');
+            const tbody = document.getElementById('tblDanhSachBody');
+
+            // Nếu bảng danh sách đang ẩn thì hiện lên và tải dữ liệu
+            if (vungDanhSach.style.display === 'none') {
+                try {
+                    const response = await fetch('/api/NhanVien/danh-sach');
+                    const list = await response.json();
+
+                    if (response.ok) {
+                        tbody.innerHTML = '';
+                        list.forEach(nv => {
+                            const tr = `
+                                <tr>
+                                    <td class="fw-bold text-center">${nv.maNV || nv.MaNV || ''}</td>
+                                    <td>${nv.hoTen || nv.HoTen || ''}</td>
+                                    <td class="text-center">${nv.ngaySinh || nv.NgaySinh || ''}</td>
+                                    <td class="text-center">${nv.phai || nv.Phai || ''}</td>
+                                    <td>${nv.sdt || nv.SDT || ''}</td>
+                                    <td>${nv.email || nv.Email || ''}</td>
+                                    <td>${nv.diaChi || nv.DiaChi || ''}</td>
+                                    <td>${nv.chucVu || nv.ChucVu || ''}</td>
+                                    <td>${nv.phongBan || nv.PhongBan || ''}</td>
+                                    <td class="text-center">${(nv.trangThai ?? nv.TrangThai) ? '<span class="badge bg-success">Làm việc</span>' : '<span class="badge bg-secondary">Nghỉ</span>'}</td>
+                                </tr>
+                            `;
+                            tbody.innerHTML += tr;
+                        });
+
+                        vungCaNhan.style.display = 'none';
+                        vungDanhSach.style.display = 'block';
+                    } else {
+                        alert('Không thể tải danh sách nhân viên!');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Lỗi kết nối khi lấy danh sách!');
+                }
+            } else {
+                // Nếu đang hiện danh sách thì bấm lại sẽ ẩn đi, quay về xem thông tin cá nhân
+                vungDanhSach.style.display = 'none';
+                vungCaNhan.style.display = 'block';
+            }
+        }
+
+        // 3. Chức năng Chấm công
+        async function thucHienChamCong() {
+            const currentUser = layUserHienTai();
+            const username = currentUser.tenDangNhap || currentUser.TenDangNhap || "nv_an";
+
+            try {
+                const response = await fetch('/api/NhanVien/cham-cong', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ TenDangNhap: username })
+                });
+                const result = await response.json();
+                alert(result.message || result.Message || (response.ok ? 'Chấm công thành công!' : 'Chấm công thất bại!'));
+            } catch (err) {
+                console.error(err);
+                alert('Lỗi kết nối khi chấm công!');
+            }
+        }
+
+        // 4. Hiển thị Modal Đổi mật khẩu
+        function hienModalDoiMatKhau() {
+            const modalElement = document.getElementById('doiMatKhauModal');
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            }
+        }
+
+        async function guiDoiMatKhau() {
+            const currentUser = layUserHienTai();
+            const username = currentUser.tenDangNhap || currentUser.TenDangNhap || "nv_an";
+            const mkCu = document.getElementById('txtMatKhauCu').value.trim();
+            const mkMoi = document.getElementById('txtMatKhauMoi').value.trim();
+
+            if (!mkCu || !mkMoi) {
+                alert('Vui lòng nhập đầy đủ mật khẩu cũ và mới!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/Auth/doi-mat-khau', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ TenDangNhap: username, MatKhauCu: mkCu, MatKhauMoi: mkMoi })
+                });
+                const result = await response.json();
+                alert(result.message || result.Message || (response.ok ? 'Đổi mật khẩu thành công!' : 'Đổi mật khẩu thất bại!'));
+                if (response.ok) {
+                    location.reload();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Lỗi kết nối!');
+            }
+        }
+    </script>
+}

@@ -1,0 +1,330 @@
+﻿@page
+@model API_TEST.Pages.NhanVienModel
+@{
+    ViewData["Title"] = "Quản lý nhân viên";
+}
+
+<div class="container-fluid mt-4">
+    <h2 class="text-center mb-4 text-primary fw-bold">QUẢN LÝ NHÂN VIÊN</h2>
+
+    <div class="row">
+        <!-- Khung Nhập Liệu Thông Tin -->
+        <div class="col-lg-12 mb-4">
+            <div class="card shadow p-4">
+                <h5 class="card-title mb-3 text-secondary">Thông tin chi tiết nhân viên</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Mã nhân viên</label>
+                        <input type="text" id="txtMaNV" class="form-control" placeholder="Nhập mã NV..." />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Họ tên</label>
+                        <input type="text" id="txtHoTen" class="form-control" placeholder="Nhập họ tên..." />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Phái</label>
+                        <select id="txtPhai" class="form-select">
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Lương</label>
+                        <input type="number" id="txtLuong" class="form-control" placeholder="Nhập lương..." />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Ngày sinh</label>
+                        <input type="date" id="txtNgaySinh" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">SĐT</label>
+                        <input type="text" id="txtSDT" class="form-control" placeholder="Nhập số điện thoại..." />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="txtEmail" class="form-control" placeholder="Nhập email..." />
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Địa chỉ</label>
+                        <input type="text" id="txtDiaChi" class="form-control" placeholder="Nhập địa chỉ..." />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Mã Phòng ban (MaPB)</label>
+                        <input type="text" id="txtMaPB" class="form-control" placeholder="Nhập mã phòng ban..." />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Mã Chức vụ (MaCV)</label>
+                        <input type="text" id="txtMaCV" class="form-control" placeholder="Nhập mã chức vụ..." />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Trạng thái</label>
+                        <select id="txtTrangThai" class="form-select">
+                            <option value="true">Đang làm việc</option>
+                            <option value="false">Đã nghỉ việc</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Các Nút Chức Năng -->
+                <div class="mt-4 d-flex flex-wrap gap-2 justify-content-center">
+                    <button type="button" onclick="thucHienThem()" class="btn btn-success px-4">Thêm</button>
+                    <button type="button" onclick="thucHienSua()" class="btn btn-warning px-4 text-white">Sửa</button>
+                    <button type="button" onclick="thucHienXoa()" class="btn btn-danger px-4">Xóa</button>
+                    <button type="button" onclick="lamMoiForm()" class="btn btn-secondary px-4">Làm mới</button>
+                    <button type="button" onclick="taiDanhSachNhanVien()" class="btn btn-info px-4 text-white">Xem</button>
+                    <button type="button" onclick="xuatFileCSV()" class="btn btn-dark px-4">Xuất</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bảng Hiển Thị Dữ Liệu Đầy Đủ -->
+        <div class="col-lg-12">
+            <div class="card shadow p-4">
+                <h5 class="card-title mb-3 text-secondary">Danh sách nhân viên</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-primary text-center">
+                            <tr>
+                                <th>Mã NV</th>
+                                <th>Họ tên</th>
+                                <th>Phái</th>
+                                <th>Lương</th>
+                                <th>Ngày sinh</th>
+                                <th>SĐT</th>
+                                <th>Email</th>
+                                <th>Địa chỉ</th>
+                                <th>Chức vụ</th>
+                                <th>Phòng ban</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tblDanhSachNhanVien">
+                            <tr>
+                                <td colspan="11" class="text-center text-muted">Nhấn nút "Xem" để tải dữ liệu...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // 1. Tải danh sách đầy đủ khi bấm nút XEM
+        async function taiDanhSachNhanVien() {
+            try {
+                const response = await fetch('/api/NhanVien/danh-sach');
+                const danhSach = await response.json();
+                const tbody = document.getElementById('tblDanhSachNhanVien');
+                tbody.innerHTML = '';
+
+                if (!danhSach || danhSach.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted">Không có dữ liệu nhân viên nào!</td></tr>`;
+                    return;
+                }
+
+                danhSach.forEach(nv => {
+                    const row = `
+                        <tr onclick="chonNhanVien(this)" style="cursor: pointer;"
+                            data-manv="${nv.maNV || nv.MaNV || ''}"
+                            data-hoten="${nv.hoTen || nv.HoTen || ''}"
+                            data-phai="${nv.phai || nv.Phai || ''}"
+                            data-luong="${nv.luong || nv.Luong || ''}"
+                            data-ngaysinh="${nv.ngaySinh || nv.NgaySinh || ''}"
+                            data-sdt="${nv.sdt || nv.SDT || ''}"
+                            data-email="${nv.email || nv.Email || ''}"
+                            data-diachi="${nv.diaChi || nv.DiaChi || ''}"
+                            data-macv="${nv.maCV || nv.MaCV || ''}"
+                            data-mapb="${nv.maPB || nv.MaPB || ''}"
+                            data-trangthai="${nv.trangThai || nv.TrangThai || false}">
+                            <td>${nv.maNV || nv.MaNV || ''}</td>
+                            <td>${nv.hoTen || nv.HoTen || ''}</td>
+                            <td>${nv.phai || nv.Phai || ''}</td>
+                            <td>${nv.luong || nv.Luong || ''}</td>
+                            <td>${nv.ngaySinh || nv.NgaySinh || ''}</td>
+                            <td>${nv.sdt || nv.SDT || ''}</td>
+                            <td>${nv.email || nv.Email || ''}</td>
+                            <td>${nv.diaChi || nv.DiaChi || ''}</td>
+                            <td>${nv.chucVu || nv.ChucVu || ''}</td>
+                            <td>${nv.phongBan || nv.PhongBan || ''}</td>
+                            <td>${(nv.trangThai || nv.TrangThai) ? 'Đang làm việc' : 'Đã nghỉ'}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('Lỗi tải dữ liệu:', error);
+                document.getElementById('tblDanhSachNhanVien').innerHTML =
+                    `<tr><td colspan="11" class="text-center text-danger">Lỗi kết nối đến API danh sách!</td></tr>`;
+            }
+        }
+
+        // 2. Click vào dòng trên bảng để đẩy tất cả dữ liệu ngược lên form
+        function chonNhanVien(tr) {
+            document.getElementById('txtMaNV').value = tr.getAttribute('data-manv');
+            document.getElementById('txtHoTen').value = tr.getAttribute('data-hoten');
+            document.getElementById('txtPhai').value = tr.getAttribute('data-phai') || 'Nam';
+            document.getElementById('txtLuong').value = tr.getAttribute('data-luong');
+            document.getElementById('txtNgaySinh').value = tr.getAttribute('data-ngaysinh');
+            document.getElementById('txtSDT').value = tr.getAttribute('data-sdt');
+            document.getElementById('txtEmail').value = tr.getAttribute('data-email');
+            document.getElementById('txtDiaChi').value = tr.getAttribute('data-diachi');
+            document.getElementById('txtMaCV').value = tr.getAttribute('data-macv');
+            document.getElementById('txtMaPB').value = tr.getAttribute('data-mapb');
+
+            const trangThai = tr.getAttribute('data-trangthai');
+            document.getElementById('txtTrangThai').value = (trangThai === 'true' || trangThai === 'True') ? "true" : "false";
+        }
+
+        // 3. Thêm nhân viên
+        async function thucHienThem() {
+            const data = layDuLieuTuForm();
+            if (!data.MaNV) { alert('Vui lòng nhập mã nhân viên!'); return; }
+
+            try {
+                const response = await fetch('/api/NhanVien/them', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Thêm nhân viên thành công!');
+                    taiDanhSachNhanVien();
+                    lamMoiForm();
+                } else {
+                    alert('Thêm thất bại: ' + (result.error || result.Message || 'Lỗi dữ liệu'));
+                }
+            } catch (err) {
+                alert('Lỗi kết nối đến server!');
+            }
+        }
+
+        // 4. Sửa nhân viên
+        async function thucHienSua() {
+            const data = layDuLieuTuForm();
+            if (!data.MaNV) { alert('Vui lòng chọn nhân viên cần sửa!'); return; }
+
+            try {
+                const response = await fetch('/api/NhanVien/sua', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Cập nhật nhân viên thành công!');
+                    taiDanhSachNhanVien();
+                } else {
+                    alert('Cập nhật thất bại: ' + (result.error || result.Message || 'Lỗi dữ liệu'));
+                }
+            } catch (err) {
+                alert('Lỗi kết nối đến server!');
+            }
+        }
+
+        // 5. Xóa nhân viên
+        async function thucHienXoa() {
+            const maNV = document.getElementById('txtMaNV').value;
+            if (!maNV) { alert('Vui lòng chọn nhân viên cần xóa!'); return; }
+
+            if (!confirm(`Bạn có chắc muốn xóa nhân viên có mã: ${maNV}?`)) return;
+
+            try {
+                const response = await fetch(`/api/NhanVien/xoa/${maNV}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Xóa thành công!');
+                    taiDanhSachNhanVien();
+                    lamMoiForm();
+                } else {
+                    alert('Xóa thất bại: ' + (result.error || ''));
+                }
+            } catch (err) {
+                alert('Lỗi kết nối đến server!');
+            }
+        }
+
+        // 6. Làm mới form
+        function lamMoiForm() {
+            document.getElementById('txtMaNV').value = '';
+            document.getElementById('txtHoTen').value = '';
+            document.getElementById('txtPhai').value = 'Nam';
+            document.getElementById('txtLuong').value = '';
+            document.getElementById('txtNgaySinh').value = '';
+            document.getElementById('txtSDT').value = '';
+            document.getElementById('txtEmail').value = '';
+            document.getElementById('txtDiaChi').value = '';
+            document.getElementById('txtMaCV').value = '';
+            document.getElementById('txtMaPB').value = '';
+            document.getElementById('txtTrangThai').value = 'true';
+        }
+
+        // 7. Xuất file CSV đầy đủ
+        async function xuatFileCSV() {
+            try {
+                const response = await fetch('/api/NhanVien/danh-sach');
+                const danhSach = await response.json();
+
+                if (!danhSach || danhSach.length === 0) {
+                    alert('Không có dữ liệu để xuất!');
+                    return;
+                }
+
+                let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+                csvContent += "MaNV,HoTen,Phai,Luong,NgaySinh,SDT,Email,DiaChi,ChucVu,PhongBan,TrangThai\n";
+
+                danhSach.forEach(nv => {
+                    let row = [
+                        nv.maNV || nv.MaNV || '',
+                        `"${nv.hoTen || nv.HoTen || ''}"`,
+                        nv.phai || nv.Phai || '',
+                        nv.luong || nv.Luong || 0,
+                        nv.ngaySinh || nv.NgaySinh || '',
+                        nv.sdt || nv.SDT || '',
+                        nv.email || nv.Email || '',
+                        `"${nv.diaChi || nv.DiaChi || ''}"`,
+                        `"${nv.chucVu || nv.ChucVu || ''}"`,
+                        `"${nv.phongBan || nv.PhongBan || ''}"`,
+                        (nv.trangThai || nv.TrangThai) ? 'Dang lam viec' : 'Da nghi'
+                    ].join(",");
+                    csvContent += row + "\n";
+                });
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "DanhSachNhanVienDayDu.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                alert('Lỗi khi xuất file!');
+            }
+        }
+
+        // Thu thập toàn bộ dữ liệu từ form gửi lên API
+        function layDuLieuTuForm() {
+            return {
+                MaNV: document.getElementById('txtMaNV').value.trim(),
+                HoTen: document.getElementById('txtHoTen').value.trim(),
+                Phai: document.getElementById('txtPhai').value,
+                Luong: document.getElementById('txtLuong').value ? parseFloat(document.getElementById('txtLuong').value) : 0,
+                NgaySinh: document.getElementById('txtNgaySinh').value ? document.getElementById('txtNgaySinh').value : null,
+                SDT: document.getElementById('txtSDT').value.trim() || null,
+                Email: document.getElementById('txtEmail').value.trim() || null,
+                DiaChi: document.getElementById('txtDiaChi').value.trim() || null,
+                MaCV: document.getElementById('txtMaCV').value.trim() || null,
+                MaPB: document.getElementById('txtMaPB').value.trim() || null,
+                TrangThai: document.getElementById('txtTrangThai').value === "true"
+            };
+        }
+    </script>
+}
