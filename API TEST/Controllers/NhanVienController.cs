@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using QLNhanVien2;
 using System;
-using System.Data.SqlClient;
+using Microsoft.Data.Sqlite;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -14,16 +14,16 @@ public class NhanVienController : ControllerBase
         var list = new System.Collections.Generic.List<object>();
         try
         {
-            using (SqlConnection conn = DatabaseHelper.GetConnection())
+            using (SqliteConnection conn = DatabaseHelper.GetConnection())
             {
                 conn.Open();
                 string sql = @"SELECT nv.MaNV, nv.HoTen, nv.NTNS, nv.Phai, nv.Luong, nv.SDT, nv.Email, nv.DiaChi, 
-                                      nv.MaCV, cv.TenCV, nv.MaPB, pb.TenPB, nv.TrangThai 
+                                    nv.MaCV, cv.TenCV, nv.MaPB, pb.TenPB, nv.TrangThai 
                                FROM NhanVien nv 
                                LEFT JOIN ChucVu cv ON nv.MaCV = cv.MaCV 
                                LEFT JOIN PhongBan pb ON nv.MaPB = pb.MaPB";
-                using (SqlCommand cmd = new SqlCommand(sql, conn))
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (SqliteCommand cmd = new SqliteCommand(sql, conn))
+                using (SqliteDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
@@ -60,7 +60,7 @@ public class NhanVienController : ControllerBase
     {
         try
         {
-            using (SqlConnection conn = DatabaseHelper.GetConnection())
+            using (SqliteConnection conn = DatabaseHelper.GetConnection())
             {
                 conn.Open();
                 string sql = @"SELECT nv.MaNV, nv.HoTen, nv.NTNS, nv.Phai, nv.Luong, nv.SDT, nv.Email, nv.DiaChi, cv.TenCV, pb.TenPB, nv.TrangThai
@@ -69,10 +69,10 @@ public class NhanVienController : ControllerBase
                                LEFT JOIN ChucVu cv ON nv.MaCV = cv.MaCV
                                LEFT JOIN PhongBan pb ON nv.MaPB = pb.MaPB
                                WHERE tk.TenDangNhap = @TenDangNhap";
-                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                using (SqliteCommand cmd = new SqliteCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@TenDangNhap", username.Trim());
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    using (SqliteDataReader reader = cmd.ExecuteReader())
                     {
                         if (reader.Read())
                         {
@@ -109,11 +109,11 @@ public class NhanVienController : ControllerBase
     {
         try
         {
-            using (SqlConnection conn = DatabaseHelper.GetConnection())
+            using (SqliteConnection conn = DatabaseHelper.GetConnection())
             {
                 conn.Open();
                 string sql = "INSERT INTO NhanVien (MaNV, HoTen, Phai, Luong, NTNS, SDT, Email, DiaChi, MaCV, MaPB, TrangThai) VALUES (@MaNV, @HoTen, @Phai, @Luong, @NTNS, @SDT, @Email, @DiaChi, @MaCV, @MaPB, @TrangThai)";
-                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                using (SqliteCommand cmd = new SqliteCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@MaNV", model.MaNV);
                     cmd.Parameters.AddWithValue("@HoTen", model.HoTen);
@@ -125,7 +125,7 @@ public class NhanVienController : ControllerBase
                     cmd.Parameters.AddWithValue("@DiaChi", model.DiaChi ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@MaCV", model.MaCV ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@MaPB", model.MaPB ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@TrangThai", model.TrangThai);
+                    cmd.Parameters.AddWithValue("@TrangThai", model.TrangThai ? 1 : 0);
                     cmd.ExecuteNonQuery();
                 }
             }
@@ -143,11 +143,11 @@ public class NhanVienController : ControllerBase
     {
         try
         {
-            using (SqlConnection conn = DatabaseHelper.GetConnection())
+            using (SqliteConnection conn = DatabaseHelper.GetConnection())
             {
                 conn.Open();
                 string sql = "UPDATE NhanVien SET HoTen = @HoTen, Phai = @Phai, Luong = @Luong, NTNS = @NTNS, SDT = @SDT, Email = @Email, DiaChi = @DiaChi, MaCV = @MaCV, MaPB = @MaPB, TrangThai = @TrangThai WHERE MaNV = @MaNV";
-                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                using (SqliteCommand cmd = new SqliteCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@MaNV", model.MaNV);
                     cmd.Parameters.AddWithValue("@HoTen", model.HoTen);
@@ -159,7 +159,7 @@ public class NhanVienController : ControllerBase
                     cmd.Parameters.AddWithValue("@DiaChi", model.DiaChi ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@MaCV", model.MaCV ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@MaPB", model.MaPB ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@TrangThai", model.TrangThai);
+                    cmd.Parameters.AddWithValue("@TrangThai", model.TrangThai ? 1 : 0);
                     cmd.ExecuteNonQuery();
                 }
             }
@@ -177,11 +177,11 @@ public class NhanVienController : ControllerBase
     {
         try
         {
-            using (SqlConnection conn = DatabaseHelper.GetConnection())
+            using (SqliteConnection conn = DatabaseHelper.GetConnection())
             {
                 conn.Open();
                 string sql = "DELETE FROM NhanVien WHERE MaNV = @MaNV";
-                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                using (SqliteCommand cmd = new SqliteCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@MaNV", maNV);
                     cmd.ExecuteNonQuery();
@@ -206,14 +206,14 @@ public class NhanVienController : ControllerBase
                 return BadRequest(new { success = false, message = "Thiếu thông tin tài khoản chấm công!" });
             }
 
-            using (SqlConnection conn = DatabaseHelper.GetConnection())
+            using (SqliteConnection conn = DatabaseHelper.GetConnection())
             {
                 conn.Open();
 
                 // 1. Lấy MaNV từ bảng TaiKhoan dựa vào TenDangNhap
                 string getMaNVSql = "SELECT MaNV FROM TaiKhoan WHERE TenDangNhap = @TenDangNhap";
                 string maNV = null;
-                using (SqlCommand cmdGet = new SqlCommand(getMaNVSql, conn))
+                using (SqliteCommand cmdGet = new SqliteCommand(getMaNVSql, conn))
                 {
                     cmdGet.Parameters.AddWithValue("@TenDangNhap", model.TenDangNhap.Trim());
                     object result = cmdGet.ExecuteScalar();
@@ -228,22 +228,22 @@ public class NhanVienController : ControllerBase
                     return BadRequest(new { success = false, message = "Tài khoản này chưa được liên kết với mã nhân viên nào!" });
                 }
 
-                // 2. Kiểm tra xem hôm nay nhân viên này đã chấm công chưa (Tùy chọn: mỗi ngày 1 lần)
+                // 2. Kiểm tra xem hôm nay nhân viên này đã chấm công chưa (Dùng định dạng ngày chuẩn SQLite)
                 string checkSql = @"SELECT COUNT(*) FROM ChamCong 
-                                WHERE MaNV = @MaNV AND CAST(ThoiGianChamCong AS DATE) = CAST(GETDATE() AS DATE)";
-                using (SqlCommand cmdCheck = new SqlCommand(checkSql, conn))
+                                WHERE MaNV = @MaNV AND DATE(ThoiGianChamCong) = DATE('now', 'localtime')";
+                using (SqliteCommand cmdCheck = new SqliteCommand(checkSql, conn))
                 {
                     cmdCheck.Parameters.AddWithValue("@MaNV", maNV);
-                    int count = (int)cmdCheck.ExecuteScalar();
+                    long count = (long)cmdCheck.ExecuteScalar();
                     if (count > 0)
                     {
                         return BadRequest(new { success = false, message = "Hôm nay bạn đã chấm công rồi, không thể chấm công lại!" });
                     }
                 }
 
-                // 3. Thực hiện thêm bản ghi chấm công vào bảng ChamCong
-                string insertSql = "INSERT INTO ChamCong (MaNV, ThoiGianChamCong, TrangThai) VALUES (@MaNV, GETDATE(), N'Đúng giờ')";
-                using (SqlCommand cmdInsert = new SqlCommand(insertSql, conn))
+                // 3. Thực hiện thêm bản ghi chấm công vào bảng ChamCong (Dùng giờ hiện tại của SQLite)
+                string insertSql = "INSERT INTO ChamCong (MaNV, ThoiGianChamCong, TrangThai) VALUES (@MaNV, DATETIME('now', 'localtime'), 'Đúng giờ')";
+                using (SqliteCommand cmdInsert = new SqliteCommand(insertSql, conn))
                 {
                     cmdInsert.Parameters.AddWithValue("@MaNV", maNV);
                     cmdInsert.ExecuteNonQuery();
@@ -256,12 +256,6 @@ public class NhanVienController : ControllerBase
         {
             return StatusCode(500, new { success = false, message = "Lỗi Server khi chấm công: " + ex.Message });
         }
-    }
-
-    // Model nhận dữ liệu chấm công đi kèm
-    public class ChamCongModel
-    {
-        public string TenDangNhap { get; set; }
     }
 }
 
